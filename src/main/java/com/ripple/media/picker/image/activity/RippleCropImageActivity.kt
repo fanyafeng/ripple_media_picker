@@ -1,5 +1,6 @@
 package com.ripple.media.picker.image.activity
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.ExifInterface
@@ -10,6 +11,7 @@ import com.ripple.media.picker.R
 import com.ripple.media.picker.base.RippleBaseActivity
 import com.ripple.media.picker.config.CropImageConfig
 import com.ripple.media.picker.config.impl.CropImageConfigImpl
+import com.ripple.media.picker.image.RippleImagePick
 import com.ripple.media.picker.util.screenHeight
 import com.ripple.media.picker.util.screenwidth
 import com.ripple.media.picker.view.CropImageView
@@ -59,6 +61,7 @@ class RippleCropImageActivity : RippleBaseActivity(), CropImageView.OnBitmapSave
 
     override fun onResume() {
         super.onResume()
+        toolbarCenterTitle?.text = "裁剪图片"
         toolbarRightTitle?.setOnClickListener {
             val cropLength = screenHeight().coerceAtMost(screenwidth())
             cropImageView.saveBitmapToFile(
@@ -76,14 +79,11 @@ class RippleCropImageActivity : RippleBaseActivity(), CropImageView.OnBitmapSave
     }
 
     private fun initData() {
-        val path =
-            "/storage/emulated/0/DCIM/Camera/IMG-20200717-f6b2a944-396e-4cc9-8624-105f9dc9e81b.jpg"
-        loadPicture(path)
-//        if (cropImageUrl.isNullOrBlank()) {
-//            finish()
-//        } else {
-//            loadPicture(cropImageUrl!!)
-//        }
+        if (cropImageUrl.isNullOrBlank()) {
+            finish()
+        } else {
+            loadPicture(cropImageUrl!!)
+        }
     }
 
     private fun loadPicture(picUrl: String) {
@@ -114,10 +114,10 @@ class RippleCropImageActivity : RippleBaseActivity(), CropImageView.OnBitmapSave
         val width = options.outWidth
         val height = options.outHeight
         var inSampleSize = 1
-        if (height > reqHeight) {
-            inSampleSize = width / reqHeight
+        inSampleSize = if (height > reqHeight) {
+            width / reqHeight
         } else {
-            inSampleSize = height / reqHeight
+            height / reqHeight
         }
         return inSampleSize
     }
@@ -154,8 +154,15 @@ class RippleCropImageActivity : RippleBaseActivity(), CropImageView.OnBitmapSave
      */
     override fun onBitmapSaveSuccess(file: File?) {
         Toast.makeText(this, "图片保存成功", Toast.LENGTH_SHORT).show()
+        val listener = RippleImagePick.getInstance().imageCropListener
+        if (listener != null) {
+            listener.onImageCropSaveResult(file)
+            RippleImagePick.getInstance().imageCropListener = null
+        }
+        val intent = Intent()
+        intent.putExtra(CropImageConfig.CROP_IMAGE_REQUEST_RESULT, file)
+        setResult(RESULT_OK, intent)
         finish()
-
     }
 
     /**
@@ -163,5 +170,11 @@ class RippleCropImageActivity : RippleBaseActivity(), CropImageView.OnBitmapSave
      * 需要进行回调
      */
     override fun onBitmapSaveError(file: File?) {
+        val listener = RippleImagePick.getInstance().imageCropListener
+        if (listener != null) {
+            listener.onImageCropSaveResult(null)
+            RippleImagePick.getInstance().imageCropListener = null
+        }
+        finish()
     }
 }

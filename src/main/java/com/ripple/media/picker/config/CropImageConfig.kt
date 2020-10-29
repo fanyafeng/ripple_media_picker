@@ -23,6 +23,16 @@ interface CropImageConfig : Serializable {
         设置图片裁剪链接
          */
         const val CROP_IMAGE_URL = "crop_image_url"
+
+        /*
+        图片处理完成回调code
+         */
+        const val CROP_IMAGE_REQUEST_CODE = 516
+
+        /*
+        图片处理完成后回调
+         */
+        const val CROP_IMAGE_REQUEST_RESULT="crop_image_code"
     }
 
     /**
